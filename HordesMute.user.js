@@ -8,8 +8,8 @@
 // @icon         http://www.hordes.fr/gfx/icons/item_bullets.gif
 // @grant        none
 // @require      https://tmp-staticserver.herokuapp.com/lib/KHLib-0.4.2.js
-// @updateURL    https://github.com/Croaaa/HordesMute/raw/master/HordesMute.user.js
-// @downloadURL  https://github.com/Croaaa/HordesMute/raw/master/HordesMute.user.js
+// @updateURL    https://github.com/Croaaa/HordesMute/raw/main/HordesMute.user.js
+// @downloadURL  https://github.com/Croaaa/HordesMute/raw/main/HordesMute.user.js
 // ==/UserScript==
 
 // A MODIFIER.
