@@ -120,6 +120,11 @@ var mute = ["Ross","pheb"]; // Exemple var mute = ["Pseudo1", "Pseudo2", "Pseudo
             KhLib.onHashChange(tryBindToForum);
             KhLib.onGameUpdate(refresh);
 
+            setTimeout(() => {
+                tryBindToForum();
+                setForumActions();
+            }, 2 * 1000);
+
             state.initialized = true;
             refresh();
         }
