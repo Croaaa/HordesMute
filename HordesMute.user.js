@@ -7,8 +7,6 @@
 // @match        http://www.hordes.fr/*
 // @icon         http://www.hordes.fr/gfx/icons/item_bullets.gif
 // @grant        none
-// @downloadURL  https://tmp-staticserver.herokuapp.com/hordes_uninstall_user/huu.user.js
-// @updateURL    https://tmp-staticserver.herokuapp.com/hordes_uninstall_user/huu.meta.js
 // @require      https://tmp-staticserver.herokuapp.com/lib/KHLib-0.4.2.js
 // ==/UserScript==
 
