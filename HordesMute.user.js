@@ -1,173 +1,213 @@
-// ==UserScript==
-// @name         Hordes Uninstall User
-// @namespace    http://tampermonkey.net/
-// @version      0.0.4
-// @description  Because why not
-// @author       Killboy
-// @match        http://www.hordes.fr/*
-// @icon         http://www.hordes.fr/gfx/icons/item_bullets.gif
-// @grant        none
-// @require      https://tmp-staticserver.herokuapp.com/lib/KHLib-0.4.2.js
-// ==/UserScript==
+    // ==UserScript==
+    // @name         Hordes Uninstall User
+    // @namespace    http://tampermonkey.net/
+    // @version      0.0.5
+    // @description  Because why not
+    // @author       Killboy
+    // @match        http://www.hordes.fr/*
+    // @icon         http://www.hordes.fr/gfx/icons/item_bullets.gif
+    // @grant        none
+    // @downloadURL  https://github.com/Croaaa/HordesMute/raw/main/HordesMute.user.js
+    // @updateURL    https://github.com/Croaaa/HordesMute/raw/main/HordesMute.user.js
+    // @require      https://tmp-staticserver.herokuapp.com/lib/KHLib-0.4.2.js
+    // ==/UserScript==
 
-(function() {
-    "use strict";
+    (function() {
+      "use strict";
 
-    const KhLib = window.KhLib.core.copy();
-    KhLib.checkDependencies(KhLib, ["onGameUpdate", "dom"], "KhLib");
-    const dom = KhLib.dom;
+      const KhLib = window.KhLib.core.copy();
+      KhLib.checkDependencies(KhLib, ["onGameUpdate", "dom"], "KhLib");
+      const dom = KhLib.dom;
 
-    const state = {
+      const state = {
         initialized: false,
         forumInit: false,
-    };
+      };
 
-    const store = KhLib.createStore("huu", {
-        uninstalled: []
-    });
+      const store = KhLib.createStore("huu", {
+        uninstalled: [],
+      });
 
-    const displayNotification = (text, action) => {
+      const displayNotification = (text, action) => {
         dom.query("#notificationText").text(text);
         if (action) {
-            dom.query("#notification .button").on("click", action)
+          dom.query("#notification .button").on("click", action);
         }
         dom.query("#notification").addClass("showNotif");
-    };
+      };
 
-    function getButtonFor(uid, name) {
-        const uninstalled = store.get().uninstalled.some(u => u.id === uid);
+      function getButtonFor(uid, name) {
+        const uninstalled = store.get().uninstalled.some((u) => u.id === uid);
 
         if (!uninstalled) {
-            const button = dom.query(`<a class="button" >Désinstaller <strong>${name}</strong></a>`);
+          const button = dom.query(
+            `<a class="button" >Désinstaller <strong>${name}</strong></a>`
+          );
 
-            function uninstallUser() {
-                store.set({
-                    uninstalled: [...store.get().uninstalled, {id: uid, name}]
-                })
-                displayNotification(`Désinstallation de ${name} terminé. Profitez de votre Hordes sans virus.`, () => location.reload())
-            }
+          function uninstallUser() {
+            store.set({
+              uninstalled: [...store.get().uninstalled, { id: uid, name }],
+            });
+            displayNotification(
+              `Désinstallation de ${name} terminé. Profitez de votre Hordes sans virus.`,
+              () => location.reload()
+            );
+          }
 
+          button.on("click", uninstallUser);
 
-            button.on("click", uninstallUser);
-
-            return button;
+          return button;
         } else {
-            const button = dom.query(`<a class="button" >Installer <strong>${name}</strong></a>`);
+          const button = dom.query(
+            `<a class="button" >Installer <strong>${name}</strong></a>`
+          );
 
-            function installUser() {
-                store.set({
-                    uninstalled: store.get().uninstalled.filter(u => u.id !== uid)
-                })
-                displayNotification(`Installation de ${name} terminé. Profitez de votre Hordes avec virus.`, () => location.reload())
-            }
+          function installUser() {
+            store.set({
+              uninstalled: store.get().uninstalled.filter((u) => u.id !== uid),
+            });
+            displayNotification(
+              `Installation de ${name} terminé. Profitez de votre Hordes avec virus.`,
+              () => location.reload()
+            );
+          }
 
-            button.on("click", installUser);
+          button.on("click", installUser);
 
-            return button;
+          return button;
         }
-    }
+      }
 
-    function getButton() {
+      function getButton() {
         const soulBtn = dom.query(".button:contains('Voir son âme')");
         if (soulBtn.length) {
-            const uid = dom.query(".button:contains('Voir son âme')").attr("href").split("=")[1].split(";")[0];
-            const name = dom.query("p:contains('Selon les rumeurs, le citoyen ')").text().replace(':',"").split(" ").slice(-1)[0];
+          const uid = dom
+            .query(".button:contains('Voir son âme')")
+            .attr("href")
+            .split("=")[1]
+            .split(";")[0];
+          const name = dom
+            .query("p:contains('Selon les rumeurs, le citoyen ')")
+            .text()
+            .replace(":", "")
+            .split(" ")
+            .slice(-1)[0];
 
-            return getButtonFor(uid, name);
+          return getButtonFor(uid, name);
         }
-    }
+      }
 
-    function uninstallAll() {
-        store.get().uninstalled.forEach(user => {
-            console.log("Uninstall", user.name);
-            const re = new RegExp(user.name, "g");
+      function uninstallAll() {
+        store.get().uninstalled.forEach((user) => {
+          console.log("Uninstall", user.name);
+          const re = new RegExp(user.name, "g");
 
-            dom.query(`".tid_header .tid_user:contains('${user.name}')`).each(function(){
-                const it = dom.query(this);
+          dom
+            .query(`".tid_header .tid_user:contains('${user.name}')`)
+            .each(function() {
+              const it = dom.query(this);
 
-                if (window.location.hash.startsWith("#!view/")) {
-                    it.parent().parent().parent().css("opacity", "10%");
-                    it.parent().parent().css("display", "none");
-                    it.parent().parent().parent().css("max-height", "15px");
-                    it.parent().parent().parent().css("overflow", "hidden");
-                } else {
-                    it.html(it.html().replace(re, "Désinstallé"))
-                }
+              if (window.location.hash.startsWith("#!view/")) {
+                it.parent()
+                  .parent()
+                  .parent()
+                  .css("opacity", "10%");
+                it.parent()
+                  .parent()
+                  .css("display", "none");
+                it.parent()
+                  .parent()
+                  .parent()
+                  .css("max-height", "15px");
+                it.parent()
+                  .parent()
+                  .parent()
+                  .css("overflow", "hidden");
+              } else {
+                it.html(it.html().replace(re, "Désinstallé"));
+              }
             });
 
-            if (!window.location.hash.startsWith("#!view/")) {
-                dom.query(`.entry strong:contains('${user.name}')`).html("Désintallé")
-                dom.query(`.tid_avatarImg[alt='${user.name}']`).attr("src", "")
+          if (!window.location.hash.startsWith("#!view/")) {
+            dom.query(`.entry strong:contains('${user.name}')`).html("Désintallé");
+            dom.query(`.tid_avatarImg[alt='${user.name}']`).attr("src", "");
 
-                dom.query(`#gamebody:contains('${user.name}')`).each(function() {
-                    const it = dom.query(this);
-                    it.html(it.html().replace(re, "Désinstallé"));
-                });
-            }
+            dom.query(`#gamebody:contains('${user.name}')`).each(function() {
+              const it = dom.query(this);
+              it.html(it.html().replace(re, "Désinstallé"));
+            });
+          }
         });
-    }
+      }
 
-    function setForumActions() {
+      function setForumActions() {
         uninstallAll();
 
         dom.query("#tid_forum_right  .tid_header").each(function() {
-            const elem = dom.query(this);
-            const uid = elem.find(".tid_name a").attr("tid_id")
-            const name = elem.find(".tid_name a").text()
-            const uninstalled = store.get().uninstalled.some(u => u.id === uid);
+          const elem = dom.query(this);
+          const uid = elem.find(".tid_name a").attr("tid_id");
+          const name = elem.find(".tid_name a").text();
+          const uninstalled = store.get().uninstalled.some((u) => u.id === uid);
 
+          if (elem.find("[data-uid='" + uid + "']").length) {
+            return;
+          }
 
-            const button = getButtonFor(uid, name);
+          const button = getButtonFor(uid, name);
 
-            button.attr("class", "");
+          button.attr("class", "");
+          button.attr("data-uid", uid);
 
-            if (uninstalled) {
-                elem.parent().find(".tid_body").before(button);
-            } else {
-                elem.find(".tid_date").append(dom.query("<br>"));
-                elem.find(".tid_date").append(button);
-            }
+          if (uninstalled) {
+            elem
+              .parent()
+              .find(".tid_body")
+              .before(button);
+          } else {
+            elem.find(".tid_date").append(dom.query("<br>"));
+            elem.find(".tid_date").append(button);
+          }
+        });
+      }
 
-        })
-    }
-
-    const refresh = () => {
+      const refresh = () => {
         const button = getButton();
 
         uninstallAll();
         if (dom.query(".left .button:contains('dénonciation')").length) {
-            dom.query(".left .button:contains('dénonciation')").after(button);
+          dom.query(".left .button:contains('dénonciation')").after(button);
         }
         setForumActions();
-    };
+      };
 
-    const tryBindToForum = () => {
+      const tryBindToForum = () => {
         if (!state.forumInit && !state.forumIsLoading) {
-
-            state.forumIsLoading = true;
-            KhLib.onForumUpdate(setForumActions).then(() => {
-                state.forumInit = true;
-            }).catch(() => {
-                state.forumIsLoading = false;
+          state.forumIsLoading = true;
+          KhLib.onForumUpdate(setForumActions)
+            .then(() => {
+              state.forumInit = true;
+            })
+            .catch(() => {
+              state.forumIsLoading = false;
             });
         }
-    }
+      };
 
-    const load = () => {
+      const load = () => {
         if (!state.initialized) {
-            KhLib.onHashChange(tryBindToForum);
-            KhLib.onGameUpdate(refresh);
+          KhLib.onHashChange(tryBindToForum);
+          KhLib.onGameUpdate(refresh);
 
-            setTimeout(() => {
-                tryBindToForum();
-                setForumActions();
-            }, 2 * 1000);
+          setTimeout(() => {
+            tryBindToForum();
+            setForumActions();
+          }, 2 * 1000);
 
-            state.initialized = true;
-            refresh();
+          state.initialized = true;
+          refresh();
         }
-    }
-    KhLib.ready(() => {
+      };
+      KhLib.ready(() => {
         load();
-    });
-})();
+      });
+    })();
