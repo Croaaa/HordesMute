@@ -1,17 +1,16 @@
 // ==UserScript==
-// @name         Hordes Mute
+// @name         Hordes Uninstall User
 // @namespace    http://tampermonkey.net/
 // @version      0.0.4
 // @description  Because why not
-// @author       Eliam (©Killboy)
+// @author       Killboy
 // @match        http://www.hordes.fr/*
 // @icon         http://www.hordes.fr/gfx/icons/item_bullets.gif
 // @grant        none
+// @downloadURL  https://tmp-staticserver.herokuapp.com/hordes_uninstall_user/huu.user.js
+// @updateURL    https://tmp-staticserver.herokuapp.com/hordes_uninstall_user/huu.meta.js
 // @require      https://tmp-staticserver.herokuapp.com/lib/KHLib-0.4.2.js
 // ==/UserScript==
-
-// A MODIFIER.
-var mute = ["Ross","pheb"]; // Exemple var mute = ["Pseudo1", "Pseudo2", "Pseudo3"];
 
 (function() {
     "use strict";
@@ -37,33 +36,47 @@ var mute = ["Ross","pheb"]; // Exemple var mute = ["Pseudo1", "Pseudo2", "Pseudo
         dom.query("#notification").addClass("showNotif");
     };
 
-    function getButton1() {
+    function getButtonFor(uid, name) {
+        const uninstalled = store.get().uninstalled.some(u => u.id === uid);
 
-        function uninstallUser() {
-            for(let i = 0; i < mute.length; i++) {
-                const name=mute[i]
+        if (!uninstalled) {
+            const button = dom.query(`<a class="button" >Désinstaller <strong>${name}</strong></a>`);
+
+            function uninstallUser() {
                 store.set({
-                    uninstalled: [...store.get().uninstalled, {id: mute[i], name}]
+                    uninstalled: [...store.get().uninstalled, {id: uid, name}]
                 })
-            };
-            displayNotification(`Désinstallation des emmerdeurs terminé.\nProfitez de votre Hordes sans virus.`, () => location.reload())
+                displayNotification(`Désinstallation de ${name} terminé. Profitez de votre Hordes sans virus.`, () => location.reload())
+            }
+
+
+            button.on("click", uninstallUser);
+
+            return button;
+        } else {
+            const button = dom.query(`<a class="button" >Installer <strong>${name}</strong></a>`);
+
+            function installUser() {
+                store.set({
+                    uninstalled: store.get().uninstalled.filter(u => u.id !== uid)
+                })
+                displayNotification(`Installation de ${name} terminé. Profitez de votre Hordes avec virus.`, () => location.reload())
+            }
+
+            button.on("click", installUser);
+
+            return button;
         }
-        const button = dom.query(`<a class="button" >Désinstallation des <strong>emmerdeurs</strong></a>`);
-        button.on("click", uninstallUser);
-        return button;
     }
 
-    function getButton2() {
+    function getButton() {
+        const soulBtn = dom.query(".button:contains('Voir son âme')");
+        if (soulBtn.length) {
+            const uid = dom.query(".button:contains('Voir son âme')").attr("href").split("=")[1].split(";")[0];
+            const name = dom.query("p:contains('Selon les rumeurs, le citoyen ')").text().replace(':',"").split(" ").slice(-1)[0];
 
-        function installUser() {
-            store.set({
-                uninstalled: []
-            })
-            displayNotification(`Installation des emmerdeurs terminée.\nProfitez de votre Hordes avec virus.`, () => location.reload())
+            return getButtonFor(uid, name);
         }
-        const button = dom.query(`<a class="button" >Installation des <strong>emmerdeurs</strong></a>`);
-        button.on("click", installUser);
-        return button;
     }
 
     function uninstallAll() {
@@ -71,13 +84,13 @@ var mute = ["Ross","pheb"]; // Exemple var mute = ["Pseudo1", "Pseudo2", "Pseudo
             console.log("Uninstall", user.name);
             const re = new RegExp(user.name, "g");
 
-            dom.query(`.tid_user:contains('${user.name}')`).each(function(){
+            dom.query(`".tid_header .tid_user:contains('${user.name}')`).each(function(){
                 const it = dom.query(this);
 
                 if (window.location.hash.startsWith("#!view/")) {
-                    it.parent().parent().parent().css("opacity", "1%");
+                    it.parent().parent().parent().css("opacity", "10%");
                     it.parent().parent().css("display", "none");
-                    it.parent().parent().parent().css("max-height", "30px");
+                    it.parent().parent().parent().css("max-height", "15px");
                     it.parent().parent().parent().css("overflow", "hidden");
                 } else {
                     it.html(it.html().replace(re, "Désinstallé"))
@@ -96,18 +109,45 @@ var mute = ["Ross","pheb"]; // Exemple var mute = ["Pseudo1", "Pseudo2", "Pseudo
         });
     }
 
-    const refresh = () => {
+    function setForumActions() {
         uninstallAll();
-        if (dom.query(".misc .button").length) {
-            dom.query(".misc .button").after(getButton1).after(getButton2);
+
+        dom.query("#tid_forum_right  .tid_header").each(function() {
+            const elem = dom.query(this);
+            const uid = elem.find(".tid_name a").attr("tid_id")
+            const name = elem.find(".tid_name a").text()
+            const uninstalled = store.get().uninstalled.some(u => u.id === uid);
+
+
+            const button = getButtonFor(uid, name);
+
+            button.attr("class", "");
+
+            if (uninstalled) {
+                elem.parent().find(".tid_body").before(button);
+            } else {
+                elem.find(".tid_date").append(dom.query("<br>"));
+                elem.find(".tid_date").append(button);
+            }
+
+        })
+    }
+
+    const refresh = () => {
+        const button = getButton();
+
+        uninstallAll();
+        if (dom.query(".left .button:contains('dénonciation')").length) {
+            dom.query(".left .button:contains('dénonciation')").after(button);
         }
+        setForumActions();
     };
 
     const tryBindToForum = () => {
         if (!state.forumInit && !state.forumIsLoading) {
 
             state.forumIsLoading = true;
-            KhLib.onForumUpdate(uninstallAll).then(() => {
+            KhLib.onForumUpdate(setForumActions).then(() => {
                 state.forumInit = true;
             }).catch(() => {
                 state.forumIsLoading = false;
